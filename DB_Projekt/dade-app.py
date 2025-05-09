@@ -4,7 +4,7 @@ import plotly.express as px
 import pandas as pd
 
 # Daten einlesen
-df_original = pd.read_excel('/Users/selinasteiner/Desktop/DADE/Projekt/Datensatz_public_emdat_incl_hist_20250409_modified.xlsx',
+df_original = pd.read_excel('Datensatz_public_emdat_incl_hist_20250409_modified_2.xlsx',
                             sheet_name='EM-DAT Data (Original)')
 
 # Dash App
@@ -28,8 +28,8 @@ app.layout = html.Div([
                 clearable=False,
                 style={'marginBottom': '20px', 'width': '30%'}
             ),
-            dcc.Graph(id='map-fig')
-        ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top', 'paddingRight': '2%'}),
+            dcc.Graph(id='map-fig', style={'height': '850px'})
+        ], style={'width': '60%', 'display': 'inline-block', 'paddingRight': '2%', 'verticalAlign': 'top'}),
 
         # Rechte Spalte mit zwei Grafiken
         html.Div([
