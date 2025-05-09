@@ -1,0 +1,22 @@
+/* Macht den linken Balken (Track) transparent */
+.rc-slider-track {
+    background-color: transparent !important;
+}
+
+/* Macht den Knopf farbig */
+.rc-slider-handle {
+    border-color: #a63603 !important;
+    background-color: #a63603 !important;
+}
+
+/* Sicherstellen, dass die Skalen-Beschriftungen (Marks) normal angezeigt werden */
+.rc-slider-mark-text {
+    color: black !important;
+    font-weight: normal;
+}
+
+/* Einfärben der kleinen Schritte (steps) */
+.rc-slider-dot {
+    border-color: #fc9869 !important;  /* Randfarbe */
+    background-color: #fc9869 !important;  /* Füllfarbe */
+}

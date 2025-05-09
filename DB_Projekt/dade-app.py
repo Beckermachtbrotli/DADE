@@ -11,24 +11,59 @@ df_original = pd.read_excel('Datensatz_public_emdat_incl_hist_20250409_modified_
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.H1("Impact of disasters worldwide - Test"),
+    html.H1("Impact of disasters worldwide"),
 
     html.Div([
-        # Linke Spalte mit Dropdown und Karte
+        # Linke Spalte mit zwei Dropdowns nebeneinander und darunter die Karte
         html.Div([
-            html.Label("Select Disaster Group:"),
-            dcc.Dropdown(
-                id='disaster-group-dropdown',
-                options=[
-                    {'label': 'All', 'value': 'All'},
-                    {'label': 'Natural', 'value': 'Natural'},
-                    {'label': 'Technological', 'value': 'Technological'}
-                ],
-                value='All',
-                clearable=False,
-                style={'marginBottom': '20px', 'width': '30%'}
-            ),
-            dcc.Graph(id='map-fig', style={'height': '850px'})
+            # Zwei Dropdowns nebeneinander
+            html.Div([
+                html.Div([
+                    html.Label("Select Disaster Group:"),
+                    dcc.Dropdown(
+                        id='disaster-group-dropdown',
+                        options=[
+                            {'label': 'All', 'value': 'All'},
+                            {'label': 'Natural', 'value': 'Natural'},
+                            {'label': 'Technological', 'value': 'Technological'}
+                        ],
+                        value='All',
+                        clearable=False,
+                        style={'width': '100%'}
+                    )
+                ], style={'width': '48%', 'display': 'inline-block', 'marginRight': '10%'}),
+
+                html.Div([
+                    html.Label("Select Metric:"),
+                    dcc.Dropdown(
+                        id='metric-dropdown',
+                        options=[
+                            {'label': 'Total Deaths', 'value': 'Total Deaths'},
+                            {'label': 'Number Disaster', 'value': 'Count'},
+                            {'label': 'Total Damages', 'value': 'Total Damages'}
+                        ],
+                        value='Total Deaths',
+                        clearable=False,
+                        style={'width': '100%'}
+                    )
+                ], style={'width': '48%', 'display': 'inline-block'})
+            ], style={'display': 'flex', 'marginBottom': '30px'}),
+
+            # Year Slider
+            html.Div([
+                html.Label("Select Year:"),
+                dcc.Slider(
+                    id="year-slider",
+                    min=1900,
+                    max=2025,
+                    value=2020,
+                    step=1,
+                    marks={year: {'label': str(year), 'style': {'fontSize': '10px'}} for year in range(1900, 2025, 10)},
+                    tooltip={"placement": "bottom", "always_visible": False}
+                ),
+            ], style={'marginBottom': '30px'}),
+
+            dcc.Graph(id='map-fig')
         ], style={'width': '60%', 'display': 'inline-block', 'paddingRight': '2%', 'verticalAlign': 'top'}),
 
         # Rechte Spalte mit zwei Grafiken
@@ -62,6 +97,17 @@ def update_graphs(selected_group):
         color_continuous_scale='Reds',
         title=f'Total Deaths by Country ({selected_group})',
         template='simple_white'
+    )
+    map_fig.update_layout(
+        height=600,
+        coloraxis_colorbar=dict(
+            orientation='h',  # horizontal
+            x=0.5,  # zentriert (x von 0 bis 1)
+            xanchor='center',
+            y=-0.0,  # unterhalb der Karte
+            yanchor='top',
+            title='Total Deaths'
+        )
     )
 
     # Balkendiagramm
