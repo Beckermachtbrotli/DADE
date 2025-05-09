@@ -73,12 +73,12 @@ def generate_figures(filtered_df, metric):
     )
     # Balkendiagramm
     if metric == "Count":
-        df_types = filtered_df["Disaster Type"].value_counts().nlargest(4).reset_index()
+        df_types = filtered_df["Disaster Type"].value_counts().nlargest(7).reset_index()
         df_types.columns = ["Disaster Type", "Count"]
     else:
         df_types = filtered_df[["Disaster Type", metric]].dropna()
         df_types = df_types.groupby("Disaster Type", as_index=False)[metric].sum()
-        df_types = df_types.sort_values(by=metric, ascending=False).head(4)
+        df_types = df_types.sort_values(by=metric, ascending=False).head(7)
 
     fig_bar = px.bar(
         df_types,
