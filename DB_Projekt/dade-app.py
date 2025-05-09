@@ -11,7 +11,7 @@ df_original = pd.read_excel('Datensatz_public_emdat_incl_hist_20250409_modified_
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.H1("Impact of disasters worldwide"),
+    html.H1("Impact of disasters worldwide - Test"),
 
     html.Div([
         # Linke Spalte mit Dropdown und Karte
