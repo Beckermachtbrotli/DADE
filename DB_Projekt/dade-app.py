@@ -11,12 +11,10 @@ df_original = pd.read_excel('Datensatz_public_emdat_incl_hist_20250409_modified_
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.H1("Impact of disasters worldwide"),
-
-    html.Div([
-        # Linke Spalte mit zwei Dropdowns nebeneinander und darunter die Karte
+        # Linke Spalte
         html.Div([
-            # Zwei Dropdowns nebeneinander
+            html.H1("Impact of disasters worldwide"),
+            # Dropdown-Box bleibt einzeln
             html.Div([
                 html.Div([
                     html.Label("Select Disaster Group:"),
@@ -39,8 +37,8 @@ app.layout = html.Div([
                         id='metric-dropdown',
                         options=[
                             {'label': 'Total Deaths', 'value': 'Total Deaths'},
-                            {'label': 'Number Disaster', 'value': 'Count'},
-                            {'label': 'Total Damages', 'value': 'Total Damages'}
+                            {'label': 'Total Damages', 'value': 'Total Damages'},
+                            {'label': 'Number of Disasters', 'value': 'Count'}
                         ],
                         value='Total Deaths',
                         clearable=False,
@@ -49,7 +47,7 @@ app.layout = html.Div([
                 ], style={'width': '48%', 'display': 'inline-block'})
             ], style={'display': 'flex', 'marginBottom': '30px'}),
 
-            # Year Slider
+            # Gemeinsame Box für Slider + Map
             html.Div([
                 html.Label("Select Year:"),
                 dcc.Slider(
@@ -61,79 +59,118 @@ app.layout = html.Div([
                     marks={year: {'label': str(year), 'style': {'fontSize': '10px'}} for year in range(1900, 2025, 10)},
                     tooltip={"placement": "bottom", "always_visible": False}
                 ),
-            ], style={'marginBottom': '30px'}),
+                dcc.Graph(id='map-fig')
+            ], className='white-box'),
 
-            dcc.Graph(id='map-fig')
         ], style={'width': '60%', 'display': 'inline-block', 'paddingRight': '2%', 'verticalAlign': 'top'}),
 
-        # Rechte Spalte mit zwei Grafiken
+        # Rechte Spalte mit Bar- und Line-Chart in Boxen
         html.Div([
-            dcc.Graph(id='bar-fig'),
-            dcc.Graph(id='line-fig')
+            html.Div(
+                [dcc.Graph(id='bar-fig', style={'height': '380px'})],
+                className='white-box',
+                style={'marginBottom': '20px'}  # Abstand zwischen den Boxen
+            ),
+            html.Div(
+                [dcc.Graph(id='line-fig', style={'height': '380px'})],
+                className='white-box'
+            )
         ], style={'width': '38%', 'display': 'inline-block', 'verticalAlign': 'top'})
-    ])
-])
+
+], className='app-background')
+
 
 # Callback zur Aktualisierung der Diagramme
 @app.callback(
     Output('map-fig', 'figure'),
     Output('bar-fig', 'figure'),
     Output('line-fig', 'figure'),
-    Input('disaster-group-dropdown', 'value')
+    Input('disaster-group-dropdown', 'value'),
+    Input('year-slider', 'value'),
+    Input('metric-dropdown', 'value')
 )
-def update_graphs(selected_group):
+def update_graphs(selected_group, selected_year, selected_metric):
+    # Filter nach Gruppe
     if selected_group == 'All':
         df = df_original.copy()
     else:
         df = df_original[df_original['Disaster Group'] == selected_group]
 
+    # Filter nach Jahr für die Karte
+    df_map = df[df['Start Year'] == selected_year]
+
+    # Aggregation je nach gewählter Metrik
+    if selected_metric == 'Count':
+        map_df = df_map.groupby('Country', as_index=False).size()
+        map_df.columns = ['Country', 'Number of Disasters']
+        color_column = 'Number of Disasters'
+    else:
+        map_df = df_map.groupby('Country', as_index=False)[selected_metric].sum()
+        color_column = selected_metric
+
     # Weltkarte
-    map_df = df.groupby('Country', as_index=False)['Total Deaths'].sum()
     map_fig = px.choropleth(
         map_df,
         locations='Country',
         locationmode='country names',
-        color='Total Deaths',
+        color=color_column,
         color_continuous_scale='Reds',
-        title=f'Total Deaths by Country ({selected_group})',
+        title=f'{color_column} by Country in {selected_year} ({selected_group})',
         template='simple_white'
     )
     map_fig.update_layout(
         height=600,
+        title_x=0.08,
+        title_y=0.88,
         coloraxis_colorbar=dict(
-            orientation='h',  # horizontal
-            x=0.5,  # zentriert (x von 0 bis 1)
+            orientation='h',
+            x=0.5,
             xanchor='center',
-            y=-0.0,  # unterhalb der Karte
+            y=-0.0,
             yanchor='top',
-            title='Total Deaths'
+            title=color_column
         )
     )
 
     # Balkendiagramm
-    grouped = df.groupby('Disaster Subtype', as_index=False)['Total Deaths'].sum()
-    top5 = grouped.sort_values('Total Deaths', ascending=False).head(7)
+    if selected_metric == 'Count':
+        grouped = df['Disaster Subtype'].value_counts().nlargest(7).reset_index()
+        grouped.columns = ['Disaster Subtype', 'Number of Disasters']
+        x_col = 'Number of Disasters'
+    else:
+        grouped = df.groupby('Disaster Subtype', as_index=False)[selected_metric].sum()
+        grouped = grouped.sort_values(selected_metric, ascending=False).head(7)
+        x_col = selected_metric
+
     bar_fig = px.bar(
-        top5.sort_values('Total Deaths'),
-        x='Total Deaths',
+        grouped.sort_values(x_col),
+        x=x_col,
         y='Disaster Subtype',
         template='simple_white',
         orientation='h',
-        title=f'Top 7 Disaster Subtypes by Total Deaths ({selected_group})'
+        title=f'Top 7 Disaster Subtypes by {x_col} ({selected_group})'
     )
     bar_fig.update_traces(marker_color='#a63603')
 
     # Liniendiagramm
-    line_df = df.groupby('Start Year', as_index=False)['Total Deaths'].sum()
+    if selected_metric == 'Count':
+        # Zähle die Anzahl der Ereignisse pro Jahr
+        line_df = df.groupby('Start Year').size().reset_index(name='Number of Disasters')
+        y_col = 'Number of Disasters'
+    else:
+        # Summiere die gewählte Metrik pro Jahr
+        line_df = df.groupby('Start Year', as_index=False)[selected_metric].sum()
+        y_col = selected_metric
+
     line_fig = px.line(
         line_df,
         x='Start Year',
-        y='Total Deaths',
+        y=y_col,
         template='simple_white',
-        title=f'Total Deaths per Year ({selected_group})'
+        title=f'{y_col} per Year ({selected_group})'
     )
     line_fig.update_traces(line_color='#fdae6b')
-    line_fig.update_layout(xaxis_title='Year', yaxis_title='Total Deaths')
+    line_fig.update_layout(xaxis_title='Year', yaxis_title=y_col)
 
     return map_fig, bar_fig, line_fig
 
