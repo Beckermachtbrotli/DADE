@@ -169,7 +169,7 @@ def update_graphs(selected_group, selected_year, selected_metric):
         template='simple_white',
         title=f'{y_col} per Year ({selected_group})'
     )
-    line_fig.update_traces(line_color='#fdae6b')
+    line_fig.update_traces(line_color='#a63603')
     line_fig.update_layout(xaxis_title='Year', yaxis_title=y_col)
 
     return map_fig, bar_fig, line_fig
