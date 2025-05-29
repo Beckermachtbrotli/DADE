@@ -27,8 +27,8 @@ body, .app-background {
     background-color: #f0f0f0;
     margin: 0;
     padding: 15px;
-    overflow: hidden;  /* verhindert Scrollen */
-    height: 100vh;     /* gesamte Bildschirmhöhe */
+    "overflow: hidden;  /* verhindert Scrollen */
+    height: 100;     /* gesamte Bildschirmhöhe */
 }
 
 /* Weiße Boxen mit Schatten und abgerundeten Ecken */
@@ -40,4 +40,9 @@ body, .app-background {
     margin-bottom: 20px;
     height: auto;
     overflow: hidden;
+}
+.info-button:hover {
+    color: #0d6efd !important; /* Bootstrap Primary Blue */
+    transform: scale(1.2) translateY(2px);
+    transition: all 0.2s ease-in-out;
 }
