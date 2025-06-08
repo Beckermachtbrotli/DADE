@@ -102,7 +102,7 @@ app.layout = html.Div([
                 )
             ], style={'display': 'flex', 'marginBottom': '30px'}),
 
-            # Gemeinsame Box für Slider + Map
+            # Slider
             html.Div([
                 html.Label("Select Year:"),
                 dcc.Slider(
@@ -111,14 +111,22 @@ app.layout = html.Div([
                     max=2025,
                     value=2020,
                     step=1,
-                    marks={year: {'label': str(year), 'style': {'fontSize': '10px'}} for year in range(1900, 2025, 10)},
+                    marks={
+                        year: {'label': str(year) if year % 10 == 0 else '',
+                               'style': {'fontSize': '10px' if year % 10 == 0 else '0px'}}
+                        for year in range(1900, 2026)
+                    },
                     tooltip={"placement": "bottom", "always_visible": False}
-                ),
+                )
+            ], style={'marginBottom': '10px'}),
 
-                dcc.Graph(id='map-fig')
-            ], className='white-box'),
+            # Karte
+            html.Div(
+                dcc.Graph(id='map-fig'),
+                className='white-box'
+            ),
 
-        ], style={'width': '60%', 'display': 'inline-block', 'paddingRight': '2%', "bottom": "0"}),
+        ], style={'width': '70%', 'display': 'inline-block', 'paddingRight': '2%', "bottom": "0"}),
 
         # Rechte Spalte mit Bar- und Line-Chart in Boxen
         html.Div([
@@ -131,7 +139,7 @@ app.layout = html.Div([
                 [dcc.Graph(id='line-fig', style={'height': '380px'})],
                 className='white-box'
             )
-        ], style={'width': '38%', 'display': 'inline-block', 'verticalAlign': 'top'})
+        ], style={'width': '28%', 'display': 'inline-block', 'verticalAlign': 'top'})
 
 ], className='app-background', style = {"with":"100%"})
 
@@ -192,11 +200,11 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
     )
     map_fig.update_layout(
         height=600,
-        title_x=0.08,
+        title_x=0.1,
         title_y=0.88,
         coloraxis_colorbar=dict(
             orientation='h',
-            x=0.5,
+            x=0.53,
             xanchor='center',
             y=-0.0,
             yanchor='top',
@@ -234,9 +242,9 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
 
         x_col = selected_metric
 
-    bar_title = f"Disaster subtypes with the most severe impact {selected_year}"
+    bar_title = f"Disaster subtypes ({selected_group}) with the most severe <br>impact in {selected_year}"
     if selected_country:
-        bar_title += f" – {selected_country}"
+        bar_title += f" in {selected_country}"
 
     bar_fig = px.bar(
         grouped.sort_values(x_col),
@@ -250,7 +258,7 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
         bar_fig.update_layout(xaxis_title="Total Damages (in million US$)")
         bar_fig.update_traces(hovertemplate='%{x:,.2f} million US$')
     else:
-        bar_fig.update_layout(xaxis_title=selected_metric)
+        bar_fig.update_layout(xaxis_title=selected_metric, yaxis_title='')
 
     bar_fig.update_traces(marker_color='#a63603')
 
@@ -296,12 +304,18 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
 
     line_title = f'{y_col} per Year ({selected_group})'
     if selected_country:
-        line_title += f" – {selected_country}"
+        line_title += f" <br>in {selected_country}"
 
     line_fig.update_layout(
         template='simple_white',
         title=line_title,
-        xaxis_title='Year'
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.3,
+            xanchor="center",
+            x=0.4
+        )
     )
 
     if selected_metric == 'Total Damages':
