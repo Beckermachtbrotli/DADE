@@ -188,6 +188,14 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
         map_df = df_map.groupby('Country', as_index=False)[selected_metric].sum()
         color_column = selected_metric
 
+    # Titel je nach Metrik anpassen
+    if color_column == 'Total Damages':
+        colorbar_title = 'Total Damages in million US$'
+        map_title = f'Total Damages in million US$ by Country in {selected_year} ({selected_group})'
+    else:
+        colorbar_title = color_column
+        map_title = f'{color_column} by Country in {selected_year} ({selected_group})'
+
     # Weltkarte
     map_fig = px.choropleth(
         map_df,
@@ -195,20 +203,24 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
         locationmode='country names',
         color=color_column,
         color_continuous_scale='Reds',
-        title=f'{color_column} by Country in {selected_year} ({selected_group})',
+        title=map_title,
         template='simple_white'
     )
+
     map_fig.update_layout(
         height=600,
-        title_x=0.1,
-        title_y=0.88,
+        title_x=0.12,
+        margin=dict(t=40),
         coloraxis_colorbar=dict(
             orientation='h',
-            x=0.53,
+            x=0.50,
             xanchor='center',
             y=-0.0,
             yanchor='top',
-            title=color_column
+            title=dict(
+                text=colorbar_title,
+                side='bottom'
+            )
         )
     )
 
@@ -242,9 +254,18 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
 
         x_col = selected_metric
 
-    bar_title = f"Disaster subtypes ({selected_group}) with the most severe <br>impact in {selected_year}"
+    def insert_line_break(title, max_len=40):
+        if len(title) > max_len:
+            pos = title.find(' ', max_len)
+            if pos != -1:
+                title = title[:pos] + '<br>' + title[pos + 1:]
+        return title
+
+    bar_title = f"Disaster subtypes ({selected_group}) with the most severe impact in {selected_year}"
     if selected_country:
         bar_title += f" in {selected_country}"
+
+    bar_title = insert_line_break(bar_title)
 
     bar_fig = px.bar(
         grouped.sort_values(x_col),
@@ -255,10 +276,10 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
         title=bar_title
     )
     if selected_metric == 'Total Damages':
-        bar_fig.update_layout(xaxis_title="Total Damages (in million US$)")
-        bar_fig.update_traces(hovertemplate='%{x:,.2f} million US$')
+        bar_fig.update_layout(xaxis_title='Total Damages in million US$', yaxis_title='')
+        bar_fig.update_traces(hovertemplate='%{x:,.0f} million US$')
     else:
-        bar_fig.update_layout(xaxis_title=selected_metric, yaxis_title='')
+        bar_fig.update_layout(xaxis_title=x_col, yaxis_title='')
 
     bar_fig.update_traces(marker_color='#a63603')
 
@@ -286,11 +307,18 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
 
     line_fig = go.Figure()
 
+    if selected_metric == 'Total Damages':
+        trace_name_pre = f"Total Damage in million US$ before {year_cutoff}"
+        trace_name_post = f"Total Damage in million US$ from {year_cutoff}"
+    else:
+        trace_name_pre = f"{y_col} before {year_cutoff}"
+        trace_name_post = f"{y_col} from {year_cutoff}"
+
     line_fig.add_trace(go.Scatter(
         x=line_df_pre_2000['Start Year'],
         y=line_df_pre_2000[y_col],
         mode='lines',
-        name=f'{y_col} before {year_cutoff}',
+        name=trace_name_pre,
         line=dict(color='gray', dash='dot')
     ))
 
@@ -298,17 +326,24 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
         x=line_df_post_2000['Start Year'],
         y=line_df_post_2000[y_col],
         mode='lines',
-        name=f'{y_col} from {year_cutoff}',
+        name=trace_name_post,
         line=dict(color='#a63603')
     ))
 
-    line_title = f'{y_col} per Year ({selected_group})'
+    if selected_metric == 'Total Damages':
+        line_title = f'Total Damages in million US$ per Year ({selected_group})'
+    else:
+        line_title = f'{y_col} per Year ({selected_group})'
+
     if selected_country:
-        line_title += f" <br>in {selected_country}"
+        line_title += f" in {selected_country}"
+
+    line_title = insert_line_break(line_title)
 
     line_fig.update_layout(
         template='simple_white',
         title=line_title,
+        yaxis_title='',
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -319,10 +354,7 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
     )
 
     if selected_metric == 'Total Damages':
-        line_fig.update_yaxes(title="Total Damages (in million US$)", tickformat=",.2f")
-        line_fig.update_traces(hovertemplate='%{y:,.2f} million US$')
-    else:
-        line_fig.update_yaxes(title=y_col)
+        line_fig.update_traces(hovertemplate='%{y:,.0f} million US$')
 
     line_fig.update_traces(line_color='#a63603')
 
