@@ -48,8 +48,8 @@ app.layout = html.Div([
                 [
                     dbc.ModalHeader("Datenqualität & Quelle"),
                     dbc.ModalBody([
-                        html.P("Die Daten vor dem Jahr 2000 sind unvollständig oder weniger zuverlässig."),
-                        html.P("Quelle: EM-DAT – The International Disaster Database (www.emdat.be)")
+                        html.P("Data before the year 2000 may be incomplete or less reliable."),
+                        html.P("Source: EM-DAT – The International Disaster Database (www.emdat.be)")
                     ]),
                     dbc.ModalFooter(
                         dbc.Button("Schliessen", id="close-modal", color="secondary", className="ms-auto", n_clicks=0)
