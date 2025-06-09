@@ -17,6 +17,7 @@ app = dash.Dash(__name__, external_stylesheets=[
 ])
 
 app.layout = html.Div([
+        dcc.Store(id='selected-country', data=None),
         # Linke Spalte
         html.Div([
             # Titelzeile mit Info-Icon
@@ -153,12 +154,11 @@ app.layout = html.Div([
     Input('disaster-group-dropdown', 'value'),
     Input('year-slider', 'value'),
     Input('metric-dropdown', 'value'),
-    Input('map-fig', 'clickData'),
-    Input('reset-country-button', 'n_clicks'),
+    Input('selected-country', 'data'),
 
 )
 
-def update_graphs(selected_group, selected_year, selected_metric, map_click, reset_clicks):
+def update_graphs(selected_group, selected_year, selected_metric, selected_country):
     # Reset-Funktion
     triggered_id = ctx.triggered_id if ctx.triggered_id else None
     if triggered_id == 'reset-country-button':
@@ -225,14 +225,9 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
     )
 
     # Balkendiagramm
-    try:
-        selected_country = map_click["points"][0]["location"] if map_click else None
-        if selected_country in df_map["Country"].values:
-            df_bar = df_map[df_map["Country"] == selected_country]
-        else:
-            selected_country = None
-            df_bar = df_map
-    except (TypeError, IndexError, KeyError):
+    if selected_country in df_map["Country"].values:
+        df_bar = df_map[df_map["Country"] == selected_country]
+    else:
         selected_country = None
         df_bar = df_map
 
@@ -368,6 +363,21 @@ def update_graphs(selected_group, selected_year, selected_metric, map_click, res
 )
 def toggle_modal(n_info, n_close):
     return ctx.triggered_id == "info-icon"
+
+@app.callback(
+    Output('selected-country', 'data'),
+    Input('map-fig', 'clickData'),
+    Input('reset-country-button', 'n_clicks'),
+    prevent_initial_call=True
+)
+def update_selected_country(click_data, reset_clicks):
+    triggered_id = ctx.triggered_id
+    if triggered_id == 'reset-country-button':
+        return None
+    if click_data:
+        return click_data["points"][0]["location"]
+    return dash.no_update
+
 
 if __name__ == '__main__':
     app.run(debug=True)
